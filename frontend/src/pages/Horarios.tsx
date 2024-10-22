@@ -2,61 +2,158 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Horario {
-  id: number;
-  asignatura: string;
-  sala: string;
-  dia_semana: string;
-  modulo: number;
-  profesor: string;
+  CURS_CODIGO: number;
+  CURS_C_SEM: number;
+  CURS_SECCION: number;
+  RAMO_NOMBRE: string;
+  PLA_NOMBRE: string;
+  HOR_DIA: string;
+  HOR_H_INI: string;
+  HOR_H_FIN: string;
+  SAL_NOMBRE: string;
+  SEMESTRE: number;
 }
 
-// Lista de módulos con sus horarios correspondientes
+// Mapeo de los bloques horarios
 const modulosHorarios = [
-  '1 (08:30 - 09:15)',
-  '2 (09:25 - 10:10)',
-  '3 (10:20 - 11:05)',
-  '4 (11:15 - 12:00)',
-  '5 (12:10 - 12:55)',
-  'Colación (12:55 - 14:00)',  // Módulo de colación
-  '6 (14:00 - 14:45)',
-  '7 (14:55 - 15:40)',
-  '8 (15:50 - 16:35)',
-  '9 (16:45 - 17:30)',
-  '10 (17:40 - 18:25)',
-  '11 (18:35 - 19:20)'
+  { modulo: '1', rango: '08:30 - 09:15', inicio: '08:30' },
+  { modulo: '2', rango: '09:25 - 10:10', inicio: '09:25' },
+  { modulo: '3', rango: '10:20 - 11:05', inicio: '10:20' },
+  { modulo: '4', rango: '11:15 - 12:00', inicio: '11:15' },
+  { modulo: '5', rango: '12:10 - 12:55', inicio: '12:10' },
+  { modulo: 'Colación', rango: '12:55 - 14:00', inicio: '12:55' },
+  { modulo: '6', rango: '14:00 - 14:45', inicio: '14:00' },
+  { modulo: '7', rango: '14:55 - 15:40', inicio: '14:55' },
+  { modulo: '8', rango: '15:50 - 16:35', inicio: '15:50' },
+  { modulo: '9', rango: '16:45 - 17:30', inicio: '16:45' },
+  { modulo: '10', rango: '17:40 - 18:25', inicio: '17:40' },
+  { modulo: '11', rango: '18:35 - 19:20', inicio: '18:35' }
 ];
 
+// Días de la semana
 const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
 const Horarios: React.FC = () => {
-  const [horarios, setHorarios] = useState<Horario[][][]>([]); // Matriz para almacenar arrays de horarios
+  const [horarios, setHorarios] = useState<Horario[][][]>([]);
+  const [carrera, setCarrera] = useState<string>('');  // Carrera seleccionada
+  const [semestre, setSemestre] = useState<number>(1);  // Semestre seleccionado
+
+  // Opciones de carreras
+  const opcionesCarreras = [
+    'Química',
+    'Química y Farmacia',
+    'Ingeniería en Alimentos',
+    'Bioquímica'
+  ];
+
+  // Manejar el cambio de carrera
+  const handleCarreraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCarrera(e.target.value);
+  };
+
+  // Manejar el cambio de semestre
+  const handleSemestreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSemestre(Number(e.target.value));
+  };
 
   useEffect(() => {
-    axios.get('http://localhost:3000/horarios')
-      .then((response) => {
-        const data = response.data;
-        const horarioSemanal: Horario[][][] = Array.from({ length: 11 }, () => Array.from({ length: 5 }, () => [])); // Inicializar con arrays vacíos
+    let ruta = '';
+    
+    // Determinar la ruta del backend según la carrera seleccionada
+    if (carrera === 'Química') {
+      ruta = 'http://localhost:3000/horarios-quimica';
+    } else if (carrera === 'Química y Farmacia') {
+      ruta = 'http://localhost:3000/horarios-quimica-farmacia';
+    } else if (carrera === 'Ingeniería en Alimentos') {
+      ruta = 'http://localhost:3000/horarios-ingenieria-alimentos';
+    } else if (carrera === 'Bioquímica') {
+      ruta = 'http://localhost:3000/horarios-bioquimica';
+    }
 
-        data.forEach((horario: Horario) => {
-          const diaIndex = dias.indexOf(horario.dia_semana);
-          if (diaIndex !== -1 && horario.modulo >= 1 && horario.modulo <= 11) {
-            horarioSemanal[horario.modulo - 1][diaIndex].push(horario); // Agregar horario al array correspondiente
-          }
+    if (ruta) {  // Solo cargar si se ha seleccionado una carrera válida
+      axios.get(ruta)
+        .then((response) => {
+          const data = response.data;
+
+          // Filtrar los datos por semestre seleccionado
+          const filteredData = data.filter((horario: Horario) => horario.SEMESTRE === semestre);
+
+          // Inicializamos una matriz de 12 módulos por 5 días de la semana
+          const horarioSemanal: Horario[][][] = Array.from({ length: 12 }, () => Array.from({ length: 5 }, () => []));
+
+          // Agrupar los datos en la matriz correcta de horarios
+          filteredData.forEach((horario: Horario) => {
+            const diaIndex = dias.indexOf(horario.HOR_DIA);
+            if (diaIndex !== -1) {
+              const moduloIndex = modulosHorarios.findIndex(modulo => modulo.inicio === horario.HOR_H_INI);
+              if (moduloIndex !== -1) {
+                horarioSemanal[moduloIndex][diaIndex].push(horario);
+              }
+            }
+          });
+
+          setHorarios(horarioSemanal);
+        })
+        .catch((error) => {
+          console.error('Error al obtener los horarios:', error);
         });
+    }
+  }, [carrera, semestre]);  // Actualizar cada vez que cambie la carrera o el semestre
 
-        setHorarios(horarioSemanal);
-      })
-      .catch((error) => {
-        console.error('Error fetching the horarios:', error);
-      });
-  }, []);
+  // Función para agrupar secciones de la misma asignatura y eliminar secciones duplicadas
+  const agruparSecciones = (horarios: Horario[]) => {
+    const asignaturas: { [key: string]: Horario[] } = {};
+
+    horarios.forEach((horario) => {
+      if (!asignaturas[horario.RAMO_NOMBRE]) {
+        asignaturas[horario.RAMO_NOMBRE] = [];
+      }
+
+      // Verificamos que la sección no esté duplicada
+      const yaExisteSeccion = asignaturas[horario.RAMO_NOMBRE].some(
+        (h) => h.CURS_SECCION === horario.CURS_SECCION
+      );
+
+      if (!yaExisteSeccion) {
+        asignaturas[horario.RAMO_NOMBRE].push(horario);
+      }
+    });
+
+    return asignaturas;
+  };
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold text-center mb-4">Horario Semanal</h2>
+
+      {/* Contenedor con flexbox para alinear en una línea */}
+      <div className="flex space-x-4 mb-4">
+        {/* Selector de carrera */}
+        <div>
+          <label htmlFor="carrera" className="block mb-2">Seleccionar Carrera:</label>
+          <select id="carrera" value={carrera} onChange={handleCarreraChange} className="p-2 border border-gray-400 rounded">
+            <option value="">-- Seleccionar Carrera --</option>
+            {opcionesCarreras.map((opcion) => (
+              <option key={opcion} value={opcion}>{opcion}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Selector de semestre */}
+        <div>
+          <label htmlFor="semestre" className="block mb-2">Seleccionar Semestre:</label>
+          <select id="semestre" value={semestre} onChange={handleSemestreChange} className="p-2 border border-gray-400 rounded">
+            {[...Array(10).keys()].map(i => (
+              <option key={i + 1} value={i + 1}>{i + 1}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Tabla de horarios */}
       <table className="min-w-full table-auto border-collapse border border-gray-400">
         <thead>
-          <tr className="bg-blue-600 text-white"> {/* Color del encabezado igual al de la barra de navegación */}
+          <tr className="bg-blue-600 text-white">
             <th className="border border-gray-300 px-4 py-2">Módulo</th>
             {dias.map((dia) => (
               <th key={dia} className="border border-gray-300 px-4 py-2">{dia}</th>
@@ -65,15 +162,10 @@ const Horarios: React.FC = () => {
         </thead>
         <tbody>
           {horarios.map((moduloHorarios, moduloIndex) => (
-            <tr
-              key={moduloIndex}
-              className={`border border-gray-300 px-4 py-2 text-center odd:bg-gray-100 even:bg-gray-200`} // Alterna tonos de gris
-            >
-              {/* Mostrar el módulo con el horario asignado */}
+            <tr key={moduloIndex} className={`border border-gray-300 px-4 py-2 text-center odd:bg-gray-100 even:bg-gray-200`}>
               <td className="border border-gray-300 px-4 py-2 text-center">
-                {modulosHorarios[moduloIndex]}
+                {modulosHorarios[moduloIndex]?.rango}
               </td>
-              {/* Si es el módulo de colación (index 5), poner "Colación" para todos los días */}
               {moduloIndex === 5 ? (
                 dias.map((dia, diaIndex) => (
                   <td key={diaIndex} className="border border-gray-300 px-4 py-2 text-center">
@@ -85,13 +177,13 @@ const Horarios: React.FC = () => {
                   <td key={diaIndex} className="border border-gray-300 px-4 py-2 text-center">
                     {diaHorarios.length > 0 ? (
                       <>
-                        {/* Mostrar la asignatura una sola vez */}
-                        <div className="font-bold">{diaHorarios[0].asignatura}</div>
-                        {diaHorarios.map((horario, i) => (
+                        {/* Agrupar secciones por asignatura y eliminar secciones duplicadas */}
+                        {Object.entries(agruparSecciones(diaHorarios)).map(([ramo, secciones], i) => (
                           <div key={i} className="mb-2">
-                            {/* Mostrar Sección y Sala en la misma línea */}
-                            <div>{`Sección ${i + 1} - ${horario.sala}`}</div>
-                            <div>{horario.profesor}</div>
+                            <div className="font-bold">{ramo}</div>
+                            {secciones.map((seccion, j) => (
+                              <div key={j}>{`Sección ${seccion.CURS_SECCION} - ${seccion.SAL_NOMBRE}`}</div>
+                            ))}
                           </div>
                         ))}
                       </>

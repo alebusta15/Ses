@@ -26,61 +26,34 @@ db.connect((err) => {
   console.log('Conectado a la base de datos MySQL');
 });
 
-// Ruta para obtener los horarios
-app.get('/horarios', (req, res) => {
+// Nueva ruta para obtener los registros de la carrera de Química
+app.get('/horarios-quimica', (req, res) => {
   const query = `
-    SELECT h.id, a.nombre AS asignatura, s.nombre AS sala, h.dia_semana, h.modulo, h.profesor
-    FROM horarios h
-    JOIN asignaturas a ON h.asignatura_id = a.id
-    JOIN salas s ON h.sala_id = s.id
+    SELECT 
+      cpi.CURS_CODIGO, 
+      cpi.CURS_C_SEM, 
+      cpi.CURS_SECCION, 
+      cpi.RAMO_NOMBRE, 
+      cpi.PLA_NOMBRE, 
+      cpi.HOR_DIA, 
+      cpi.HOR_H_INI, 
+      cpi.HOR_H_FIN, 
+      cpi.SAL_NOMBRE, 
+      rs.SEMESTRE
+    FROM 
+      CURSOS_PLANES_INFO cpi
+    JOIN 
+      RAMOS_SEMESTRES rs
+    ON 
+      cpi.\`RAMOS.RAMO_C_RAMO_ESCUELA\` = rs.RAMO_C_RAMO_ESCUELA
+    WHERE 
+      cpi.PLA_NOMBRE IN ('Plan de Formación Intermedia', 'Licenciatura en Quimica v3', 'Licenciatura en Quimica v4')
   `;
 
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error al ejecutar la consulta:', err);
-      res.status(500).send('Error al obtener los horarios');
-      return;
-    }
-    res.json(results);
-  });
-});
-
-// Ruta para obtener las asignaturas
-app.get('/asignaturas', (req, res) => {
-  const query = 'SELECT * FROM asignaturas';
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error al ejecutar la consulta:', err);
-      res.status(500).send('Error al obtener las asignaturas');
-      return;
-    }
-    res.json(results);
-  });
-});
-
-// Ruta para obtener las carreras
-app.get('/carreras', (req, res) => {
-  const query = 'SELECT * FROM carreras';
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error al ejecutar la consulta:', err);
-      res.status(500).send('Error al obtener las carreras');
-      return;
-    }
-    res.json(results);
-  });
-});
-
-// Ruta para obtener las salas
-app.get('/salas', (req, res) => {
-  const query = 'SELECT * FROM salas';
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error al ejecutar la consulta:', err);
-      res.status(500).send('Error al obtener las salas');
+      res.status(500).send('Error al obtener los horarios de la carrera de Química');
       return;
     }
     res.json(results);
