@@ -40,3 +40,16 @@
 .read-the-docs {
   color: #888;
 }
+
+.fc-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%; /* Ajusta el ancho máximo del evento */
+}
+
+.fc-event {
+  width: 100%;
+  white-space: nowrap; /* Evita el desbordamiento */
+  overflow: hidden;
+}

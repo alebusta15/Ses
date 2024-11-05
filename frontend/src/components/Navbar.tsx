@@ -1,20 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Clock, FileText, GraduationCap, Database } from 'lucide-react';
-import DatabaseStatus from './DatabaseStatus';
+import { Home, Clock, FileText, GraduationCap, User, Calendar, FileQuestion } from 'lucide-react';
+import logo from '/src/assets/logo-quimica-2x.png';  // Importamos el logo
 
 const Navbar: React.FC = () => {
-  const [showDbStatus, setShowDbStatus] = useState(false);
-
-  const checkDatabaseConnection = async () => {
-    setShowDbStatus(true);
-  };
-
   return (
     <nav className="bg-blue-600 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">QuimiFarma</Link>
-        <ul className="flex space-x-4">
+        {/* Logo más grande y título */}
+        <div className="flex items-center">
+          <Link to="/">
+            <img src={logo} alt="Logo Química" className="h-16 w-auto mr-3" /> {/* Logo más grande, ajusta h-16 según sea necesario */}
+          </Link>
+          <Link to="/" className="text-3xl font-bold tracking-wide">Secretaría de Estudios</Link> {/* Nuevo título con tamaño y estilo ajustado */}
+        </div>
+
+        <ul className="flex space-x-6">
           <li>
             <Link to="/" className="flex items-center"><Home className="mr-1" size={18} /> Inicio</Link>
           </li>
@@ -28,13 +29,19 @@ const Navbar: React.FC = () => {
             <Link to="/examenes" className="flex items-center"><GraduationCap className="mr-1" size={18} /> Exámenes</Link>
           </li>
           <li>
-            <button onClick={checkDatabaseConnection} className="flex items-center">
-              <Database className="mr-1" size={18} /> Verificar BD
-            </button>
+            <Link to="/contacto" className="flex items-center"><User className="mr-1" size={18} /> Contacto</Link>
           </li>
-        </ul>
+          <li>
+            <Link to="/noticias" className="flex items-center">Gestión de Noticias</Link>  {/* Nuevo enlace */}
+          </li>
+          <li>
+            <Link to="/solicitudes" className="flex items-center"><FileQuestion className="mr-1" size={18} /> Solicitudes</Link>
+          </li>
+      </ul>
+       <li>
+            <Link to="/calendario" className="flex items-center"><Calendar className="mr-1" size={18} /> Calendario</Link> {/* Nuevo enlace */}
+          </li>
       </div>
-      {showDbStatus && <DatabaseStatus onClose={() => setShowDbStatus(false)} />}
     </nav>
   );
 };
